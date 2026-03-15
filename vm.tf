@@ -66,7 +66,7 @@ resource "aws_security_group" "ssh" {
 }
 
 resource "aws_security_group" "http" {
-  name = "allow-all-http"
+  name   = "allow-all-http"
   vpc_id = aws_vpc.open_web_ui.id
 
   ingress {
@@ -86,7 +86,6 @@ resource "aws_security_group" "http" {
   }
 }
 
-}
 
 resource "aws_key_pair" "open_web_ui" {
   key_name   = "open_wevb_ui"
