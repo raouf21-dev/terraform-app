@@ -65,6 +65,29 @@ resource "aws_security_group" "ssh" {
   }
 }
 
+resource "aws_security_group" "http" {
+  name = "allow-all-http"
+  vpc_id = aws_vpc.open_web_ui.id
+
+  ingress {
+    cidr_blocks = [
+      "0.0.0.0/0"
+    ]
+    from_port = 80
+    to_port   = 80
+    protocol  = "tcp"
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = -1
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+}
+
 resource "aws_key_pair" "open_web_ui" {
   key_name   = "open_wevb_ui"
   public_key = file("~/.ssh/id_ed25519.pub")
@@ -82,5 +105,18 @@ resource "aws_spot_instance_request" "cheap_worker" {
   subnet_id                   = aws_subnet.subnet.id
   wait_for_fulfillment        = true
 
-}
+  user_data_base64 = base64decode(file("${path.module}/scripts/provision_basic.sh"))
 
+
+}
+resource "terrcurl_request" "open_web_ui" {
+  name   = "open_web_ui"
+  url    = "http://${aws_spot_instance_request.cheap_worker.public_ip}"
+  method = "GET"
+
+  response {
+    response_code  = [200]
+    max_retry      = 120
+    retry_interval = 10
+  }
+}

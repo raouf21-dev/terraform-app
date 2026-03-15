@@ -2,7 +2,7 @@
 
 set -e 
 
- Run the script in non-interactive mode so that the installation does not 
+# Run the script in non-interactive mode so that the installation does not 
 # prompt for input
 export DEBIAN_FRONTEND=noninteractive
 
