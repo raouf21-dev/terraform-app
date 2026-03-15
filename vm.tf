@@ -90,32 +90,35 @@ resource "aws_security_group" "http" {
 resource "aws_key_pair" "open_web_ui" {
   key_name   = "open_wevb_ui"
   public_key = file("~/.ssh/id_ed25519.pub")
-
 }
 
-resource "aws_spot_instance_request" "cheap_worker" {
+resource "aws_spot_instance_request" "open_web_ui" {
   ami = data.aws_ami.debian.id
   #   spot_price    = "0.03"
-  instance_type = "t4g.micro"
+  instance_type = "t4g.medium"
+
+  root_block_device {
+    volume_size = 30
+    volume_type = "gp3"
+  }
 
   associate_public_ip_address = true
   key_name                    = aws_key_pair.open_web_ui.key_name
-  vpc_security_group_ids      = [aws_security_group.ssh.id]
-  subnet_id                   = aws_subnet.subnet.id
-  wait_for_fulfillment        = true
+  vpc_security_group_ids = [
+    aws_security_group.ssh.id,
+    aws_security_group.http.id
+  ]
+  subnet_id            = aws_subnet.subnet.id
+  wait_for_fulfillment = true
 
-  user_data_base64 = base64decode(file("${path.module}/scripts/provision_basic.sh"))
-
-
+  user_data_base64 = base64encode(file("${path.module}/scripts/provision_basic.sh"))
 }
-resource "terrcurl_request" "open_web_ui" {
+resource "terracurl_request" "open_web_ui" {
   name   = "open_web_ui"
-  url    = "http://${aws_spot_instance_request.cheap_worker.public_ip}"
+  url    = "http://${aws_spot_instance_request.open_web_ui.public_ip}"
   method = "GET"
 
-  response {
-    response_code  = [200]
-    max_retry      = 120
-    retry_interval = 10
-  }
+  response_codes = [200]
+  max_retry      = 120
+  retry_interval = 10
 }
